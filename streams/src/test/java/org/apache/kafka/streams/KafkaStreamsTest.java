@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 public class KafkaStreamsTest {
 
@@ -84,6 +85,62 @@ public class KafkaStreamsTest {
         Assert.assertEquals(stateListener.mapStates.get(KafkaStreams.State.RUNNING).longValue(), 1L);
         Assert.assertEquals(stateListener.mapStates.get(KafkaStreams.State.NOT_RUNNING).longValue(), 1L);
     }
+
+    @Test
+    public void testStartTwoKStreams() throws Exception {
+        final int oldInitCount = MockMetricsReporter.INIT_COUNT.get();
+        int oldCloseCount = MockMetricsReporter.CLOSE_COUNT.get();
+
+        final Map<KafkaStreams, StateListenerStub> kstreams = new HashMap<>();
+
+        for (int i : new Integer[]{1, 2}) {
+            final Properties props = new Properties();
+            props.setProperty(StreamsConfig.APPLICATION_ID_CONFIG, "testStartTwoKStreams-" + i);
+            props.setProperty(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+            props.setProperty(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
+            props.setProperty(StreamsConfig.METRIC_REPORTER_CLASSES_CONFIG, MockMetricsReporter.class.getName());
+
+            final KStreamBuilder builder = new KStreamBuilder();
+            final KafkaStreams streams = new KafkaStreams(builder, props);
+            StateListenerStub stateListener = new StateListenerStub();
+            streams.setStateListener(stateListener);
+            assertEquals(streams.state(), KafkaStreams.State.CREATED);
+            assertEquals(stateListener.numChanges, 0);
+            kstreams.put(streams, stateListener);
+        }
+
+        for (Map.Entry<KafkaStreams, StateListenerStub> entry : kstreams.entrySet()) {
+            final KafkaStreams streams = entry.getKey();
+            final StateListenerStub stateListener = entry.getValue();
+            streams.start();
+            assertEquals(streams.state(), KafkaStreams.State.RUNNING);
+            assertEquals(stateListener.numChanges, 1);
+            assertEquals(stateListener.oldState, KafkaStreams.State.CREATED);
+            assertEquals(stateListener.newState, KafkaStreams.State.RUNNING);
+            assertEquals(stateListener.mapStates.get(KafkaStreams.State.RUNNING).longValue(), 1L);
+            Thread.sleep(5000);
+        }
+
+        assertEquals("nothing should be closed", oldCloseCount, MockMetricsReporter.CLOSE_COUNT.get());
+
+        final int newInitCount = MockMetricsReporter.INIT_COUNT.get();
+        final int initCountDifference = newInitCount - oldInitCount;
+        assertEquals("some reporters should be initialized by calling start()", initCountDifference, kstreams.size() * 4);
+
+        for (Map.Entry<KafkaStreams, StateListenerStub> entry : kstreams.entrySet()) {
+            final KafkaStreams streams = entry.getKey();
+            final StateListenerStub stateListener = entry.getValue();
+            assertEquals(streams.state(), KafkaStreams.State.RUNNING);
+            assertTrue(streams.close(15, TimeUnit.SECONDS));
+            oldCloseCount = oldCloseCount + 4;
+            assertEquals("each reporter initialized should also be closed",
+                            oldCloseCount , MockMetricsReporter.CLOSE_COUNT.get());
+            Assert.assertEquals(streams.state(), KafkaStreams.State.NOT_RUNNING);
+            Assert.assertEquals(stateListener.mapStates.get(KafkaStreams.State.RUNNING).longValue(), 1L);
+            Assert.assertEquals(stateListener.mapStates.get(KafkaStreams.State.NOT_RUNNING).longValue(), 1L);
+        }
+    }
+
 
     @Test
     public void testCloseIsIdempotent() throws Exception {
