@@ -42,7 +42,8 @@ public final class ConfigResource {
      */
     public ConfigResource(Type type, String name) {
         Objects.requireNonNull(type, "type should not be null");
-        Objects.requireNonNull(name, "name should not be null");
+        if (type != Type.TOPIC)
+            Objects.requireNonNull(name, "name should not be null");
         this.type = type;
         this.name = name;
     }
@@ -69,15 +70,13 @@ public final class ConfigResource {
             return false;
 
         ConfigResource that = (ConfigResource) o;
-
-        return type == that.type && name.equals(that.name);
+        return type == that.type &&
+               Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        int result = type.hashCode();
-        result = 31 * result + name.hashCode();
-        return result;
+        return Objects.hash(type, name);
     }
 
     @Override

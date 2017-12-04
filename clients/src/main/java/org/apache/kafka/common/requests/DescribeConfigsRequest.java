@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.kafka.common.protocol.types.Type.INT8;
+import static org.apache.kafka.common.protocol.types.Type.NULLABLE_STRING;
 import static org.apache.kafka.common.protocol.types.Type.STRING;
 
 public class DescribeConfigsRequest extends AbstractRequest {
@@ -42,7 +43,7 @@ public class DescribeConfigsRequest extends AbstractRequest {
 
     private static final Schema DESCRIBE_CONFIGS_REQUEST_RESOURCE_V0 = new Schema(
             new Field(RESOURCE_TYPE_KEY_NAME, INT8),
-            new Field(RESOURCE_NAME_KEY_NAME, STRING),
+            new Field(RESOURCE_NAME_KEY_NAME, NULLABLE_STRING),
             new Field(CONFIG_NAMES_KEY_NAME, ArrayOf.nullable(STRING)));
 
     private static final Schema DESCRIBE_CONFIGS_REQUEST_V0 = new Schema(

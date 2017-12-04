@@ -306,9 +306,13 @@ class AdminManager(val config: KafkaConfig,
 
           case ResourceType.TOPIC =>
             val topic = resource.name
-            Topic.validate(topic)
-            // Consider optimizing this by caching the configs or retrieving them from the `Log` when possible
-            val topicProps = adminZkClient.fetchEntityConfig(ConfigType.Topic, topic)
+            val topicProps =
+              if (topic == null) new Properties
+              else {
+                Topic.validate(topic)
+                // Consider optimizing this by caching the configs or retrieving them from the `Log` when possible
+                adminZkClient.fetchEntityConfig(ConfigType.Topic, topic)
+              }
             val logConfig = LogConfig.fromProps(KafkaServer.copyKafkaConfigToLog(config), topicProps)
             createResponseConfig(logConfig, isReadOnly = false, name => !topicProps.containsKey(name))
 

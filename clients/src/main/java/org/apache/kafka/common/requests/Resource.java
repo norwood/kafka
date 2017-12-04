@@ -17,6 +17,8 @@
 
 package org.apache.kafka.common.requests;
 
+import java.util.Objects;
+
 public final class Resource {
     private final ResourceType type;
     private final String name;
@@ -42,15 +44,13 @@ public final class Resource {
             return false;
 
         Resource resource = (Resource) o;
-
-        return type == resource.type && name.equals(resource.name);
+        return type == resource.type &&
+               Objects.equals(name, resource.name);
     }
 
     @Override
     public int hashCode() {
-        int result = type.hashCode();
-        result = 31 * result + name.hashCode();
-        return result;
+        return Objects.hash(type, name);
     }
 
     @Override

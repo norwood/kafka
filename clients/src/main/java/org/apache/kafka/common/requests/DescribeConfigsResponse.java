@@ -58,7 +58,7 @@ public class DescribeConfigsResponse extends AbstractResponse {
             ERROR_CODE,
             ERROR_MESSAGE,
             new Field(RESOURCE_TYPE_KEY_NAME, INT8),
-            new Field(RESOURCE_NAME_KEY_NAME, STRING),
+            new Field(RESOURCE_NAME_KEY_NAME, NULLABLE_STRING),
             new Field(CONFIG_ENTRIES_KEY_NAME, new ArrayOf(new Schema(
                     new Field(CONFIG_NAME_KEY_NAME, STRING),
                     new Field(CONFIG_VALUE_KEY_NAME, NULLABLE_STRING),
