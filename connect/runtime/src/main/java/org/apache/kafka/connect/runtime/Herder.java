@@ -123,6 +123,10 @@ public interface Herder {
      */
     void putTaskConfigs(String connName, List<Map<String, String>> configs, Callback<Void> callback);
 
+    Collection<String> connectors();
+
+    ConnectorInfo connectorInfo(String connName);
+
     /**
      * Lookup the current status of a connector.
      * @param connName name of the connector

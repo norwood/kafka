@@ -48,6 +48,10 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -122,12 +126,18 @@ public class ConnectorsResourceTest {
     @Mock
     private Herder herder;
     private ConnectorsResource connectorsResource;
+    private UriInfo forward;
 
     @Before
     public void setUp() throws NoSuchMethodException {
         PowerMock.mockStatic(RestClient.class,
                 RestClient.class.getMethod("httpRequest", String.class, String.class, Object.class, TypeReference.class, WorkerConfig.class));
         connectorsResource = new ConnectorsResource(new HerderProvider(herder), null);
+        forward = EasyMock.mock(UriInfo.class);
+        MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
+        queryParams.putSingle("forward", "true");
+        EasyMock.expect(forward.getQueryParameters()).andReturn(queryParams).anyTimes();
+        EasyMock.replay(forward);
     }
 
     private static final Map<String, String> getConnectorConfig(Map<String, String> mapToClone) {
@@ -143,7 +153,7 @@ public class ConnectorsResourceTest {
 
         PowerMock.replayAll();
 
-        Collection<String> connectors = connectorsResource.listConnectors(FORWARD);
+        Collection<String> connectors = (Collection<String>)connectorsResource.listConnectors(forward).getEntity();
         // Ordering isn't guaranteed, compare sets
         assertEquals(new HashSet<>(Arrays.asList(CONNECTOR_NAME, CONNECTOR2_NAME)), new HashSet<>(connectors));
 
@@ -162,7 +172,7 @@ public class ConnectorsResourceTest {
 
         PowerMock.replayAll();
 
-        Collection<String> connectors = connectorsResource.listConnectors(FORWARD);
+        Collection<String> connectors = (Collection<String>)connectorsResource.listConnectors(forward).getEntity();
         // Ordering isn't guaranteed, compare sets
         assertEquals(new HashSet<>(Arrays.asList(CONNECTOR_NAME, CONNECTOR2_NAME)), new HashSet<>(connectors));
 
@@ -178,7 +188,7 @@ public class ConnectorsResourceTest {
         PowerMock.replayAll();
 
         // throws
-        connectorsResource.listConnectors(FORWARD);
+        connectorsResource.listConnectors(forward);
     }
 
     @Test

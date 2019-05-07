@@ -45,11 +45,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+
 import java.net.URI;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -84,11 +88,30 @@ public class ConnectorsResource {
 
     @GET
     @Path("/")
-    public Collection<String> listConnectors(final @QueryParam("forward") Boolean forward) throws Throwable {
-        FutureCallback<Collection<String>> cb = new FutureCallback<>();
-        herder().connectors(cb);
-        return completeOrForwardRequest(cb, "/connectors", "GET", null, new TypeReference<Collection<String>>() {
-        }, forward);
+    public Response listConnectors(
+        final @Context UriInfo uriInfo
+    ) throws Throwable {
+        if (uriInfo.getQueryParameters().containsKey("expand")) {
+            Map<String, Map<String, Object>> out = new HashMap<>();
+            for (String connector : herder().connectors()) {
+                out.put(connector, new HashMap<>());
+                for (String expansion : uriInfo.getQueryParameters().get("expand")) {
+                    switch (expansion) {
+                        case "status":
+                            out.get(connector).put("status", herder().connectorStatus(connector));
+                            break;
+                        case "info":
+                            out.get(connector).put("info", herder().connectorInfo(connector));
+                            break;
+                        default:
+                            log.info("Ignoring unknown expanion type {}", expansion);
+                    }
+                }
+            }
+            return Response.ok(out).build();
+        } else {
+            return Response.ok(herder().connectors()).build();
+        }
     }
 
     @POST

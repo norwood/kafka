@@ -418,6 +418,7 @@ public class DistributedHerder extends AbstractHerder implements Runnable {
         log.info("Herder stopped");
     }
 
+
     @Override
     public void connectors(final Callback<Collection<String>> callback) {
         log.trace("Submitting connector listing request");
