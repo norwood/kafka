@@ -227,6 +227,7 @@
 
     <ul>
         <li><code>GET /connectors</code> - return a list of active connectors</li>
+        <li><code>GET /connectors?expand={status,info}</code> - return a map of active connectors names with status and/or config information</li>
         <li><code>POST /connectors</code> - create a new connector; the request body should be a JSON object containing a string <code>name</code> field and an object <code>config</code> field with the connector configuration parameters</li>
         <li><code>GET /connectors/{name}</code> - get information about a specific connector</li>
         <li><code>GET /connectors/{name}/config</code> - get the configuration parameters for a specific connector</li>
